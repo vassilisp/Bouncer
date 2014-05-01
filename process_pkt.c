@@ -46,8 +46,9 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
 /* Magical typecasting */
   //ethernet = (struct sniff_ethernet*)(packet);                    - Not used here
   rcv_ip = (struct ip*)(packet + SIZE_ETHERNET);
+  size_ip = (rcv_ip->ip_hl)*4;
   if(rcv_ip->ip_v == 4){
-    if (rcv_ip->ip_hl < 20) {
+    if (size_ip < 20) {
       printf("\t|-  *** Invalid IP header length: %u bytes", rcv_ip->ip_hl);
       return;
     }
@@ -56,7 +57,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
     printf("\t\t|-   ** IP_V6 packet - discarding");
     return;
   }
-  size_ip = rcv_ip->ip_hl;
+
   //TODO replace wit switch for each protocol handler
   if ((rcv_ip->ip_p) == 1){
     printf("\t|  * ICMP");
@@ -67,7 +68,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   }
 
   rcv_tcp = (struct tcphdr*)(packet + SIZE_ETHERNET + size_ip);
-  size_tcp = (rcv_tcp->th_win)*4;
+  size_tcp = (rcv_tcp->th_off)*4;
   if (size_tcp < 20) {
     printf("\t|- *** Invalid TCP header length: %u bytes", size_tcp);
     return;
