@@ -16,6 +16,8 @@ void convert_time(const struct timeval *tv1){
 }
 
 
+
+
 void process_pkt(u_char *args, const struct pcap_pkthdr *header,
       const u_char *packet){
 
@@ -33,11 +35,11 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   convert_time(&header->ts);
 
   //const struct sniff_ethernet *ethernet; /* The ethernet header */ - Not used here
-  #define SIZE_ETHERNET 14
+
 
   const struct ip *rcv_ip; /* The IP header */
   const struct tcphdr *rcv_tcp; /* The TCP header */
-  const struct icmp *rcv_icmp; /* The ICMP header */
+
   const char *payload; /* Packet payload */
 
   u_int size_ip;
@@ -60,9 +62,8 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
 
   //TODO replace wit switch for each protocol handler
   if ((rcv_ip->ip_p) == 1){
-    printf("\t|  * ICMP");
-    rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + size_ip);
-    printf("Type: %d %d", rcv_icmp->icmp_type, rcv_icmp->icmp_code);
+    
+
   }else if(rcv_ip->ip_p == 6){
     printf("\t|   * TCP");
   }

@@ -7,6 +7,7 @@
 #define lookupDevice "eth0"
 #define packet_cnt 0
 
+
 void process_pkt(u_char *args, const struct pcap_pkthdr *header,
       const u_char *packet);
 
@@ -20,11 +21,13 @@ int main(int argc, char *argv[])
   }
 
   /* Parsing arguments */
-  char *arg_dev   = argv[1];
-  char *arg_lip   = argv[2];
-  char *arg_lport   = argv[3];
-  char *arg_sip   = argv[4];
-  char *arg_sport   = argv[5];
+  arg_dev   = argv[1];
+  arg_lip   = argv[2];
+  arg_lport   = argv[3];
+  arg_sip   = argv[4];
+  arg_sport   = argv[5];
+
+  printf("%s", arg_dev);
 
   /* Include here your code to initialize the PCAP capturing process */
   char *dev;
