@@ -1,5 +1,5 @@
 all:
-	gcc -g bouncer.c process_pkt.c -o bouncer -lpcap -W -Wall
+	gcc -g bouncer.c process_pkt.c -o bouncer -lpcap
 
 clean:
 	rm -f *.o bouncer
