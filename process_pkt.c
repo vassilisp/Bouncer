@@ -2,7 +2,7 @@
 #include "bouncer.h"
 
 
-void convert_time(struct timeval *tv1){
+void convert_time(const struct timeval *tv1){
 
   time_t nowtime;
   struct tm *nowtm;
@@ -11,9 +11,8 @@ void convert_time(struct timeval *tv1){
   nowtime = tv1->tv_sec;
   nowtm = localtime(&nowtime);
   strftime(tmbuf, sizeof tmbuf, "%H:%M:%S", nowtm);
-  snprintf(buf, sizeof buf, "%s::%06ld.", tmbuf, tv1->tv_usec);
-  puts (buf);
-  //printf("%s", asctime(nowtm));
+  //snprintf(buf, sizeof buf, "%s::%06ld.", tmbuf, tv1->tv_usec);
+  printf("%s::%2ld", tmbuf, tv1->tv_usec);
 }
 
 
@@ -29,7 +28,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
 
   */
 
-  printf("PACKET captured -  %ld   %06ld  ", header->ts.tv_sec, header->ts.tv_usec);
+  printf("\nPACKET captured - %d ", header->caplen);
 
   convert_time(&header->ts);
   
@@ -93,14 +92,29 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   //ethernet = (struct sniff_ethernet*)(packet);                    - Not used here
   ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
   size_ip = IP_HL(ip)*4;
-  if (size_ip < 20) {
-	printf("   * Invalid IP header length: %u bytes\n", size_ip);
+  int ip_v = IP_V(ip);
+  if(ip_v == 4){
+	if (size_ip < 20) {
+	  printf("  \t|-  *** Invalid IP header length: %u bytes", size_ip);
+	  return;
+	}
+	printf("\t\t|   * IP proto: %d",ip->ip_p);
+  }else{
+	printf("\t\t|-   ** IP_V6 packet - discarding");
 	return;
   }
+  
+  //TODO replace wit switch for each protocol handler
+  if ((ip->ip_p) == 1){
+	printf("\t|  * ICMP");
+  }else if(ip->ip_p == 6){
+	printf("\t|   * TCP");
+  }
+  
   tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
   size_tcp = TH_OFF(tcp)*4;
   if (size_tcp < 20) {
-	printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
+	printf("\t|- *** Invalid TCP header length: %u bytes", size_tcp);
 	return;
   }
   payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
