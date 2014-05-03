@@ -20,14 +20,17 @@ int main(int argc, char *argv[])
   //exit(1);
   }
 
+  char *test;
+
   /* Parsing arguments */
-  arg_dev   = argv[1];
-  arg_lip   = argv[2];
+  //printf("%s", argv[1]);
+  test   = argv[1];
+
+  arg_dev = argv[1];
+  arg_lip = argv[2];
   arg_lport   = argv[3];
   arg_sip   = argv[4];
   arg_sport   = argv[5];
-
-  printf("%s", arg_dev);
 
   /* Include here your code to initialize the PCAP capturing process */
   char *dev;
@@ -48,7 +51,7 @@ int main(int argc, char *argv[])
   }else{
     struct in_addr net_add;
     net_add.s_addr = netp;
-    printf("Preparing to listen %s ", inet_ntoa(net_add));
+    printf("Preparing to listen %s \n", inet_ntoa(net_add));
 
     net_add.s_addr = maskp;
     printf("  --NETMASK %s \n", inet_ntoa(net_add));

@@ -62,8 +62,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
 
   //TODO replace wit switch for each protocol handler
   if ((rcv_ip->ip_p) == 1){
-    
-
+    process_ping(packet, rcv_ip);
   }else if(rcv_ip->ip_p == 6){
     printf("\t|   * TCP");
   }

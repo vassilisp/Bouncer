@@ -1,10 +1,12 @@
 #include "ping.h"
 
 void process_ping(u_char *packet, struct ip *rcv_ip) {
-  printf("\t|  * ICMP");
+  printf("\t|  * ICMP\n");
+
   struct icmp *rcv_icmp; /* The ICMP header */
   rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
-  printf("Type: %d %d", rcv_icmp->icmp_type, rcv_icmp->icmp_code);
+  printf("Type: %d %d %d", rcv_icmp->icmp_type,
+      rcv_icmp->icmp_code, rcv_icmp->icmp_cksum);
 
   struct ip *send_ip;
   struct icmp *send_icmp; /* The ICMP header */
@@ -15,9 +17,9 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
 
   send_ip = rcv_ip;
   struct in_addr ip_src, ip_dst;
-
-  ip_src.s_addr = inet_addr(arg_lip);
-  ip_dst.s_addr = inet_addr(arg_sip);
+  ip_src.s_addr = (uint32_t) inet_addr(arg_lip);
+  
+  ip_dst.s_addr = (uint32_t) inet_addr(arg_sip);
 
   send_ip->ip_src = ip_src;
   send_ip->ip_dst = ip_dst;
@@ -30,4 +32,5 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
 
   int s = socket (PF_INET, SOCK_RAW, IPPROTO_ICMP);
   sendto(s, buffer, sizeof(buffer), 0, (struct sockaddr *) &sin, sizeof(sin));
+  exit(0);
 }
