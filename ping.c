@@ -16,16 +16,9 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
   printf("\t ICMP: Type: %d %d %d\n", rcv_icmp->icmp_type,
     rcv_icmp->icmp_code, rcv_icmp->icmp_cksum);
 
-  struct icmp *send_icmp = malloc(sizeof(struct icmp));
-  memcpy(send_icmp, rcv_icmp, sizeof(struct icmp));
-
-  //calculate checksum
-  send_icmp->icmp_cksum = 0;
-  send_icmp->icmp_cksum = checksum((void *) send_icmp, sizeof(struct icmp));
-
   // The IP header
-  struct ip *send_ip = malloc(sizeof(struct ip));
-  memcpy(send_ip, rcv_ip, sizeof(struct ip));
+  struct ip *send_ip;
+  send_ip = rcv_ip;
 
   send_ip->ip_src = bouncer_ip;
   send_ip->ip_dst = server_ip;
@@ -35,7 +28,7 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
   size_t size = sizeof(struct ip) + sizeof(struct icmp);
   char *buffer = malloc(size);
   memcpy(buffer, send_ip, sizeof(struct ip));
-  memcpy(buffer + sizeof(struct ip), send_icmp, sizeof(struct icmp));
+  memcpy(buffer + sizeof(struct ip), rcv_icmp, sizeof(struct icmp));
 
   struct sockaddr_in sin;
   sin.sin_family = AF_INET;
