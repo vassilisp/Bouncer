@@ -22,15 +22,11 @@ int main(int argc, char *argv[])
 
   char *test;
 
-  /* Parsing arguments */
-  //printf("%s", argv[1]);
-  test   = argv[1];
-
   arg_dev = argv[1];
   arg_lip = argv[2];
-  arg_lport   = argv[3];
-  arg_sip   = argv[4];
-  arg_sport   = argv[5];
+  arg_lport = argv[3];
+  arg_sip = argv[4];
+  arg_sport = argv[5];
 
   /* Include here your code to initialize the PCAP capturing process */
   char *dev;
@@ -65,7 +61,7 @@ int main(int argc, char *argv[])
   }
 
   /* Define a filter expression and try and compile the program.. non-optimized */
-  char filter_exp[] = "";
+  char filter_exp[] = "dst 192.168.185.130";
   if(!(filter_exp== "")){
     if(pcap_compile(descr,&fp,filter_exp,0,netp) == -1){
       fprintf(stderr,"Error calling pcap_compile\n");
@@ -81,7 +77,7 @@ int main(int argc, char *argv[])
   }
 
 
-  /* ... and loop */ 
+  /* ... and loop */
   pcap_loop(descr, packet_cnt, process_pkt, NULL);
 
   fprintf(stdout,"\nfinished\n");
