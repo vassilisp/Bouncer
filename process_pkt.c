@@ -48,6 +48,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   /* Magical typecasting */
   //ethernet = (struct sniff_ethernet*)(packet);                    - Not used here
   rcv_ip = (struct ip*)(packet + SIZE_ETHERNET);
+  printf("\nRECEIVED PACKET FROM %s \n", inet_ntoa(rcv_ip->ip_src));
   size_ip = (rcv_ip->ip_hl)*4;
   if(rcv_ip->ip_v == 4){
     if (size_ip < 20) {
@@ -55,7 +56,8 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
       return;
     }
     printf("\t| *** Version: IPv4");
-  }else{
+  }
+  else {
     printf("\t| *** IP_V6 packet - discarding\n");
     return;
   }
