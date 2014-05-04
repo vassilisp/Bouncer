@@ -3,7 +3,7 @@
 struct tcp_struct *head = NULL;
 struct tcp_struct *curr = NULL;
 
-struct tcp_struct* create_list(const struct ip ip, const struct tcphdr tcp) {
+struct tcp_struct* create_list(const struct ip ip, const struct tcphdr tcp, int port) {
   struct tcp_struct *ptr = (struct tcp_struct*)malloc(sizeof(struct tcp_struct));
   if(ptr == NULL) {
     printf("\n Node creation failed \n");
@@ -11,16 +11,17 @@ struct tcp_struct* create_list(const struct ip ip, const struct tcphdr tcp) {
   }
   ptr->ip = ip;
   ptr->tcp = tcp;
+  ptr->bouncing_port = port;
   ptr->next = NULL;
 
   head = curr = ptr;
   return ptr;
 }
 
-struct tcp_struct* add_to_list(const struct ip ip, const struct tcphdr tcp) {
+struct tcp_struct* add_to_list(const struct ip ip, const struct tcphdr tcp, int port) {
 
   if(head == NULL) {
-    return (create_list(ip, tcp));
+    return (create_list(ip, tcp, port));
   }
 
   struct tcp_struct *ptr = (struct tcp_struct*) malloc(sizeof(struct tcp_struct));
@@ -30,6 +31,7 @@ struct tcp_struct* add_to_list(const struct ip ip, const struct tcphdr tcp) {
   }
   ptr->ip = ip;
   ptr->tcp = tcp;
+  ptr->bouncing_port = port;
   ptr->next = NULL;
 
   curr->next = ptr;
@@ -39,7 +41,7 @@ struct tcp_struct* add_to_list(const struct ip ip, const struct tcphdr tcp) {
 }
 
 
-struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp,
+struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp, int port,
     struct tcp_struct **prev)
 {
   struct tcp_struct *ptr = head;
@@ -77,11 +79,11 @@ struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp,
   }
 }
 
-void delete_from_list(const struct ip ip, const struct tcphdr tcp) {
+void delete_from_list(const struct ip ip, const struct tcphdr tcp, int port) {
   struct tcp_struct *prev = NULL;
   struct tcp_struct *del = NULL;
 
-  del = search_in_list(ip, tcp, &prev);
+  del = search_in_list(ip, tcp, port, &prev);
   if(del == NULL) {
     perror("Failed to delete from list element");
     //exit(EXIT_FAILURE);

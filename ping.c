@@ -71,6 +71,7 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
   struct icmp *rcv_icmp;
   rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
 
+  //len ??
   char *rest_data = malloc(sizeof(len));
 
   rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct icmp);

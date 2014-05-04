@@ -2,5 +2,13 @@
 #define PING_H
 
 #include "globals.h"
-
+/* TCP header */
+struct tcp_pseudo /*the tcp pseudo header*/
+{
+  unsigned int src_addr;
+  unsigned int dst_addr;
+  unsigned char zero;
+  unsigned char proto;
+  unsigned short int length;
+};
 #endif
