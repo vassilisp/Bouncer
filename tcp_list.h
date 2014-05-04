@@ -6,6 +6,7 @@
 struct tcp_struct {
   struct ip ip;
   struct tcphdr tcp;
+  int bouncing_port;
   struct tcp_struct *next;
 };
 

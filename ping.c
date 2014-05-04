@@ -88,7 +88,6 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
    printf("%s    %s\n\n\n", tmp_client_addr, tmp_server_addr);
 
   if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
-  //  printf("Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     struct ping_struct *ret = NULL;
     ret = ping_search_in_list(*rcv_ip, *rcv_icmp, NULL);
     if (ret == NULL) {

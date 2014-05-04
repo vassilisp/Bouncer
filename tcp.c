@@ -45,12 +45,13 @@ void process_tcp(u_char *packet, struct ip *rcv_ip) {
 
   // The ICMP header
   struct tcphdr *tcp;
-  size_t offset = SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct icmp);
+  size_t offset = SIZE_ETHERNET + (rcv_ip->ip_hl)*4;
   tcp = (struct tcphdr*)(packet + offset);
 
-  printf("\t TCP Options: %d %d %d %d\n", tcp->th_sport, tcp->th_dport,
+  printf("\t TCP Options: %d %d %d %d\n", ntohs(tcp->th_sport), ntohs(tcp->th_dport),
     tcp->th_seq, tcp->th_ack);
 
+  
 
 /*
   char *tmp_client_addr = malloc(sizeof(char) * 16);
