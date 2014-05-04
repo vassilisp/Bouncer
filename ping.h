@@ -12,6 +12,6 @@ static struct client_id{
   }s_id;
 }saved_clients[10];
 
-void process_ping(u_char *packet, struct ip *rcv_ip);
+void process_ping(u_char *packet, struct ip *rcv_ip, int len);
 
 #endif

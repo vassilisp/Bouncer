@@ -35,7 +35,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   convert_time(&header->ts);
 
   //const struct sniff_ethernet *ethernet; /* The ethernet header */ - Not used here
-
+  printf("-------------> %d\n", header->len);
 
   const struct ip *rcv_ip; /* The IP header */
   const struct tcphdr *rcv_tcp; /* The TCP header */
@@ -65,7 +65,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   //TODO replace wit switch for each protocol handler
   if ((rcv_ip->ip_p) == 1){
     printf("\t| *** Protocol: ICMP\n");
-    process_ping(packet, rcv_ip);
+    process_ping(packet, rcv_ip, header->len);
     return;
   }else if(rcv_ip->ip_p == 6){
     process_tcp(packet, rcv_ip);

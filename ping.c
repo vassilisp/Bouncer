@@ -1,11 +1,10 @@
 #include "ping.h"
 
-void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
+void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
+    char *data, int len) {
 
 //  ping_print_list();
-
-  icmp.icmp_cksum = 0;
-  icmp.icmp_cksum = checksum((void *) &icmp, sizeof(struct icmp));
+  size_t rest_len = len - SIZE_ETHERNET - sizeof(struct ip) - sizeof(struct icmp);
 
   // The IP header
   send_ip.ip_src = bouncer_ip;
@@ -13,10 +12,11 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
   send_ip.ip_sum = 0;
   send_ip.ip_sum = ip_checksum((void *) &send_ip, sizeof(struct ip));
 
-  size_t size = sizeof(struct ip) + sizeof(struct icmp);
+  size_t size = sizeof(struct ip) + sizeof(struct icmp) + rest_len;
   char *buffer = malloc(size);
   memcpy(buffer, &send_ip, sizeof(struct ip));
   memcpy(buffer + sizeof(struct ip), &icmp, sizeof(struct icmp));
+  memcpy(buffer + sizeof(struct ip) + sizeof(struct icmp), data, rest_len);
 
   struct sockaddr_in sin;
   sin.sin_family = AF_INET;
@@ -59,8 +59,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
 
 }
 
-
-void process_ping(u_char *packet, struct ip *rcv_ip) {
+void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
 
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
@@ -71,6 +70,10 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
   // The ICMP header
   struct icmp *rcv_icmp;
   rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
+
+  char *rest_data = malloc(sizeof(len));
+
+  rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct icmp);
 
   printf("\t ICMP: Type: %d %d %04x\n", rcv_icmp->icmp_type,
     rcv_icmp->icmp_code, rcv_icmp->icmp_cksum);
@@ -95,11 +98,11 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
     memcpy(return_ping, ret, sizeof(struct ping_struct));
     ping_delete_from_list(*rcv_ip, *rcv_icmp);
     return_ping->icmp.icmp_type = 0;
-    send_ping(return_ping->ip.ip_src, return_ping->ip, return_ping->icmp);
+    send_ping(return_ping->ip.ip_src, return_ping->ip, *rcv_icmp, rest_data, len);
   }
   else {
     ping_add_to_list(*rcv_ip, *rcv_icmp);
-    send_ping(server_ip, *rcv_ip, *rcv_icmp);
+    send_ping(server_ip, *rcv_ip, *rcv_icmp, rest_data, len);
   }
 }
 
