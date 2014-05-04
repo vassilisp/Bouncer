@@ -2,7 +2,7 @@
 
 void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
 
-  ping_print_list();
+//  ping_print_list();
 
   icmp.icmp_cksum = 0;
   icmp.icmp_cksum = checksum((void *) &icmp, sizeof(struct icmp));
@@ -82,7 +82,10 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
   char *tmp_server_addr = malloc(sizeof(char) * 16);
    memcpy(tmp_server_addr, inet_ntoa(server_ip), sizeof(char)* 16);
 
+   printf("%s    %s\n\n\n", tmp_client_addr, tmp_server_addr);
+
   if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
+  //  printf("Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     struct ping_struct *ret = NULL;
     ret = ping_search_in_list(*rcv_ip, *rcv_icmp, NULL);
     if (ret == NULL) {
@@ -91,6 +94,7 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
     }
     memcpy(return_ping, ret, sizeof(struct ping_struct));
     ping_delete_from_list(*rcv_ip, *rcv_icmp);
+    return_ping->icmp.icmp_type = 0;
     send_ping(return_ping->ip.ip_src, return_ping->ip, return_ping->icmp);
   }
   else {

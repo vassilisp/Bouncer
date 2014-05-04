@@ -42,8 +42,11 @@ struct ping_struct* ping_add_to_list(const struct ip ip, const struct icmp icmp)
 struct ping_struct* ping_search_in_list(const struct ip ip, const struct icmp icmp,
     struct ping_struct **prev)
 {
+  printf("ASKING icmp with id: %d and seq: %d\n",
+          icmp.icmp_hun.ih_idseq.icd_id, icmp.icmp_hun.ih_idseq.icd_seq);
   struct ping_struct *ptr = ping_head;
   struct ping_struct *tmp = NULL;
+
   bool found = false;
   int search_type = 0;
 
@@ -55,9 +58,18 @@ struct ping_struct* ping_search_in_list(const struct ip ip, const struct icmp ic
     bool condition = false;
     //unsigned long rcv_ip = ip.ip_src.s_addr;
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
-    if(ptr->icmp.icmp_type == search_type) {
-      found = true;
-      break;
+    if(ptr->icmp.icmp_hun.ih_idseq.icd_id == icmp.icmp_hun.ih_idseq.icd_id) {
+        printf("equal? seq: %d and seq: %d\n",
+          ptr->icmp.icmp_hun.ih_idseq.icd_seq, icmp.icmp_hun.ih_idseq.icd_seq);
+        if(ptr->icmp.icmp_hun.ih_idseq.icd_seq == icmp.icmp_hun.ih_idseq.icd_seq) {
+          printf("found icmp with id: %d\n", ptr->icmp.icmp_hun.ih_idseq.icd_id);
+          found = true;
+          break;
+        }
+        else {
+          tmp = ptr;
+          ptr = ptr->next;
+        }
     }
     else {
       tmp = ptr;
@@ -84,9 +96,11 @@ struct ping_struct* ping_search_in_list(const struct ip ip, const struct icmp ic
     if(prev) {
       *prev = tmp;
     }
+    printf("returning from search...\n");
     return ptr;
   }
   else {
+    printf("returning from search...\n");
     return NULL;
   }
 }
@@ -98,20 +112,24 @@ void ping_delete_from_list(const struct ip ip, const struct icmp icmp) {
   del = ping_search_in_list(ip, icmp, &prev);
   if(del == NULL) {
     perror("Failed to delete from list element");
-    //exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
   else {
     if(prev != NULL) {
+      printf("Condition 1\n");
       prev->next = del->next;
     }
     if(del == ping_head) {
+      printf("Condition 2\n");
       ping_head = del->next;
     }
     else if(del == ping_curr) {
+      printf("Condition 3\n");
       ping_curr = prev;
     }
   }
 
+  ping_print_list();
   free(del);
   del = NULL;
 }
