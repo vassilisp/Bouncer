@@ -5,5 +5,5 @@
 
 /* Add any other declarations you may need here... */
 
-
+struct in_addr bouncer_ip, server_ip, client_ip;
 #endif
