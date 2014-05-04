@@ -24,16 +24,38 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
 
   printf("icmp type: %d\n", icmp.icmp_type);
 
-  int s = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
-  if (setsockopt(s, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0 ) {
-    perror("setsocopt() failed to set IP_HDRINCL");
-    exit(EXIT_FAILURE);
+  // Submit request for a raw socket descriptor.
+  int sd;
+  if ((sd = socket (AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
+    perror ("socket() failed ");
+    exit (EXIT_FAILURE);
   }
 
-  if (sendto(s, buffer, size, 0, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-    perror("sendto() failed");
-    exit(EXIT_FAILURE);
+  // Set flag so socket expects us to provide IPv4 header.
+  int on = 1;
+  if (setsockopt (sd, IPPROTO_IP, IP_HDRINCL, &on, sizeof (on)) < 0) {
+    perror ("setsockopt() failed to set IP_HDRINCL ");
+    exit (EXIT_FAILURE);
   }
+
+  // Bind socket to interface index.
+  struct ifreq ifr;
+  char iname[16] = "eth0";
+
+  memcpy(&ifr, &iname , sizeof(iname));
+  if (setsockopt (sd, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof (ifr)) < 0) {
+    perror ("setsockopt() failed to bind to interface ");
+    exit (EXIT_FAILURE);
+  }
+
+  // Send packet.
+  if (sendto (sd, buffer, size, 0, (struct sockaddr *) &sin, sizeof (sin)) < 0)  {
+    perror ("sendto() failed ");
+    exit (EXIT_FAILURE);
+  }
+
+  // Close socket descriptor.
+  close (sd);
 
 }
 

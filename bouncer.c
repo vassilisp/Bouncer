@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   }
 
   /* Define a filter expression and try and compile the program.. non-optimized */
-  char filter_exp[] = "dst 192.168.185.130";
+  char filter_exp[] = "dst 192.168.175.130";
   if(!(filter_exp== "")){
     if(pcap_compile(descr,&fp,filter_exp,0,netp) == -1){
       fprintf(stderr,"Error calling pcap_compile\n");
