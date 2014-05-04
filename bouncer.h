@@ -37,10 +37,10 @@
 
 /* Add any other declarations you may need here... */
 
-static char *arg_dev;
-static char *arg_lip;
-static char *arg_lport;
-static char *arg_sip;
-static char *arg_sport;
+char *arg_dev;
+char *arg_lip;
+char *arg_lport;
+char *arg_sip;
+char *arg_sport;
 
 #endif
