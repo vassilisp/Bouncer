@@ -1,7 +1,7 @@
 #ifndef PING_H
 #define PING_H
 
-#include "bouncer.h"
+#include "globals.h"
 #include "ping_list.h"
 
 static struct client_id{
@@ -14,12 +14,4 @@ static struct client_id{
 
 void process_ping(u_char *packet, struct ip *rcv_ip);
 
-const int on = 1;
-
-struct PingClients{
-  struct icmp icmp;
-  struct ip ip;
-};
-struct PingClients *p_clients;
-int p_clients_num = 0;
 #endif

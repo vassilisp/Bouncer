@@ -1,8 +1,8 @@
-#include "ping.h"
+#include "tcp.h"
 
-void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
+void send_tcp(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
 
-  ping_print_list();
+  print_list();
 
   icmp.icmp_cksum = 0;
   icmp.icmp_cksum = checksum((void *) &icmp, sizeof(struct icmp));
@@ -22,8 +22,6 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
   sin.sin_family = AF_INET;
   sin.sin_addr = receiver;
 
-  printf("icmp type: %d\n", icmp.icmp_type);
-
   int s = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
   if (setsockopt(s, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0 ) {
     perror("setsocopt() failed to set IP_HDRINCL");
@@ -37,8 +35,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp) {
 
 }
 
-
-void process_ping(u_char *packet, struct ip *rcv_ip) {
+void process_tcp(u_char *packet, struct ip *rcv_ip) {
 
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
@@ -47,14 +44,15 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
   client_ip = rcv_ip->ip_src;
 
   // The ICMP header
-  struct icmp *rcv_icmp;
-  rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
+  struct tcphdr *tcp;
+  size_t offset = SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct icmp);
+  tcp = (struct tcphdr*)(packet + offset);
 
-  printf("\t ICMP: Type: %d %d %04x\n", rcv_icmp->icmp_type,
-    rcv_icmp->icmp_code, rcv_icmp->icmp_cksum);
+  printf("\t TCP Options: %d %d %d %d\n", tcp->th_sport, tcp->th_dport,
+    tcp->th_seq, tcp->th_ack);
 
-  struct ping_struct *return_ping = malloc(sizeof(struct ping_struct));
 
+/*
   char *tmp_client_addr = malloc(sizeof(char) * 16);
    memcpy(tmp_client_addr, inet_ntoa(client_ip), sizeof(char)* 16);
   char *tmp_server_addr = malloc(sizeof(char) * 16);
@@ -62,20 +60,18 @@ void process_ping(u_char *packet, struct ip *rcv_ip) {
 
   if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
     struct ping_struct *ret = NULL;
-    ret = ping_search_in_list(*rcv_ip, *rcv_icmp, NULL);
+    ret = search_in_list(*rcv_ip, *rcv_icmp, NULL);
     if (ret == NULL) {
       perror("could not find client");
       exit(EXIT_FAILURE);
     }
     memcpy(return_ping, ret, sizeof(struct ping_struct));
-    ping_delete_from_list(*rcv_ip, *rcv_icmp);
+    delete_from_list(*rcv_ip, *rcv_icmp);
     send_ping(return_ping->ip.ip_src, return_ping->ip, return_ping->icmp);
   }
   else {
-    ping_add_to_list(*rcv_ip, *rcv_icmp);
+    add_to_list(*rcv_ip, *rcv_icmp);
     send_ping(server_ip, *rcv_ip, *rcv_icmp);
   }
+  */
 }
-
-
-

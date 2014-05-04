@@ -4,10 +4,6 @@
 
 #include "bouncer.h"
 
-#define lookupDevice "eth0"
-#define packet_cnt 0
-
-
 void process_pkt(u_char *args, const struct pcap_pkthdr *header,
       const u_char *packet);
 
@@ -20,9 +16,9 @@ int main(int argc, char *argv[])
   //exit(1);
   }
 
-/*
+  //initialize global const
+  const int on = 1;
 
-i*/
   arg_dev = argv[1];
   arg_lip = argv[2];
   arg_lport = argv[3];

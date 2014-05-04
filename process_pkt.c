@@ -1,5 +1,5 @@
 #include <time.h>
-#include "bouncer.h"
+#include "globals.h"
 
 
 void convert_time(const struct timeval *tv1){
@@ -68,6 +68,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
     process_ping(packet, rcv_ip);
     return;
   }else if(rcv_ip->ip_p == 6){
+    process_tcp(packet, rcv_ip);
     printf("\t| *** Protocol: TCP\n");
   }
 

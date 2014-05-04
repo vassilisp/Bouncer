@@ -1,9 +1,9 @@
 #include "ping_list.h"
 
-struct ping_struct *head = NULL;
-struct ping_struct *curr = NULL;
+struct ping_struct *ping_head = NULL;
+struct ping_struct *ping_curr = NULL;
 
-struct ping_struct* create_list(struct ip ip, struct icmp icmp) {
+struct ping_struct* ping_create_list(const struct ip ip, const struct icmp icmp) {
   struct ping_struct *ptr = (struct ping_struct*)malloc(sizeof(struct ping_struct));
   if(ptr == NULL) {
     printf("\n Node creation failed \n");
@@ -13,14 +13,14 @@ struct ping_struct* create_list(struct ip ip, struct icmp icmp) {
   ptr->icmp = icmp;
   ptr->next = NULL;
 
-  head = curr = ptr;
+  ping_head = ping_curr = ptr;
   return ptr;
 }
 
-struct ping_struct* add_to_list(struct ip ip, struct icmp icmp) {
+struct ping_struct* ping_add_to_list(const struct ip ip, const struct icmp icmp) {
 
-  if(head == NULL) {
-    return (create_list(ip, icmp));
+  if(ping_head == NULL) {
+    return (ping_create_list(ip, icmp));
   }
 
   struct ping_struct *ptr = (struct ping_struct*) malloc(sizeof(struct ping_struct));
@@ -32,17 +32,17 @@ struct ping_struct* add_to_list(struct ip ip, struct icmp icmp) {
   ptr->icmp = icmp;
   ptr->next = NULL;
 
-  curr->next = ptr;
-  curr = ptr;
+  ping_curr->next = ptr;
+  ping_curr = ptr;
 
   return ptr;
 }
 
 
-struct ping_struct* search_in_list(struct ip ip, struct icmp icmp,
+struct ping_struct* ping_search_in_list(const struct ip ip, const struct icmp icmp,
     struct ping_struct **prev)
 {
-  struct ping_struct *ptr = head;
+  struct ping_struct *ptr = ping_head;
   struct ping_struct *tmp = NULL;
   bool found = false;
   int search_type = 0;
@@ -91,11 +91,11 @@ struct ping_struct* search_in_list(struct ip ip, struct icmp icmp,
   }
 }
 
-void delete_from_list(struct ip ip, struct icmp icmp) {
+void ping_delete_from_list(const struct ip ip, const struct icmp icmp) {
   struct ping_struct *prev = NULL;
   struct ping_struct *del = NULL;
 
-  del = search_in_list(ip, icmp, &prev);
+  del = ping_search_in_list(ip, icmp, &prev);
   if(del == NULL) {
     perror("Failed to delete from list element");
     //exit(EXIT_FAILURE);
@@ -104,11 +104,11 @@ void delete_from_list(struct ip ip, struct icmp icmp) {
     if(prev != NULL) {
       prev->next = del->next;
     }
-    if(del == head) {
-      head = del->next;
+    if(del == ping_head) {
+      ping_head = del->next;
     }
-    else if(del == curr) {
-      curr = prev;
+    else if(del == ping_curr) {
+      ping_curr = prev;
     }
   }
 
@@ -116,8 +116,8 @@ void delete_from_list(struct ip ip, struct icmp icmp) {
   del = NULL;
 }
 
-void print_list(void) {
-  struct ping_struct *ptr = head;
+void ping_print_list(void) {
+  struct ping_struct *ptr = ping_head;
 
   printf("\n -------Printing list Start------- \n");
   while(ptr != NULL) {
