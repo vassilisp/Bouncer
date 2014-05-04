@@ -20,8 +20,9 @@ int main(int argc, char *argv[])
   //exit(1);
   }
 
-  char *test;
+/*
 
+i*/
   arg_dev = argv[1];
   arg_lip = argv[2];
   arg_lport = argv[3];

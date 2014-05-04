@@ -32,10 +32,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 
-
-#define SIZE_ETHERNET 14
-
-/* Add any other declarations you may need here... */
+#include "globals.h"
 
 
 char *arg_dev;
@@ -43,4 +40,9 @@ char *arg_lip;
 char *arg_lport;
 char *arg_sip;
 char *arg_sport;
+
+
+
+
+
 #endif
