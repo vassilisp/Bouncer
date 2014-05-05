@@ -30,7 +30,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
     perror ("socket() failed ");
     exit (EXIT_FAILURE);
   }
-
+/*
   // Set flag so socket expects us to provide IPv4 header.
   int on = 1;
   if (setsockopt (sd, IPPROTO_IP, IP_HDRINCL, &on, sizeof (on)) < 0) {
@@ -47,7 +47,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
     perror ("setsockopt() failed to bind to interface ");
     exit (EXIT_FAILURE);
   }
-
+*/
   // Send packet.
   if (sendto (sd, buffer, size, 0, (struct sockaddr *) &sin, sizeof (sin)) < 0)  {
     perror ("sendto() failed ");
@@ -71,6 +71,7 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
   struct icmp *rcv_icmp;
   rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
 
+  //len ??
   char *rest_data = malloc(sizeof(len));
 
   rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct icmp);
