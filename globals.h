@@ -28,6 +28,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <stdbool.h>
+#include <string.h>
 
 
 char *arg_dev;
