@@ -1,7 +1,7 @@
 #include "tcp.h"
 
 void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
-    char *rest_data, int rest_data_len, int port) {
+    char *rest_data, int rest_data_len, int sport, int dport) {
 
   //print_list();
   // The IP header
@@ -11,7 +11,8 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
   send_ip.ip_sum = ip_checksum((void *) &send_ip, sizeof(struct ip));
 
   //the TCP header
-  tcp.th_sport = htons((u_short) port);
+  tcp.th_sport = htons((u_short) sport);
+  tcp.th_dport = htons((u_short) dport);
   printf("port ----> %d\n", tcp.th_sport);
   tcp.th_sum = 0;
 
@@ -56,7 +57,7 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
     perror ("setsockopt() failed to set IP_HDRINCL ");
     exit (EXIT_FAILURE);
   }
-
+/*
   // Bind socket to interface index.
   struct ifreq ifr;
   char iname[16] = "eth0";
@@ -66,9 +67,11 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
     perror ("setsockopt() failed to bind to interface ");
     exit (EXIT_FAILURE);
   }
-
+*/
+  printf("Buffer size to sent: %zu\n", final_size);
   // Send packet.
-  if (sendto (sd, final_buffer, final_size, 0, (struct sockaddr *) &sin, sizeof (sin)) < 0)  {
+  if (sendto (sd, final_buffer, final_size, 0,
+        (struct sockaddr *) &sin, sizeof (sin)) < 0)  {
     perror ("sendto() failed ");
     exit (EXIT_FAILURE);
   }
@@ -102,8 +105,8 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   char syn_on = flags & TH_SYN;
   char ack_on = flags & TH_ACK;
   char synack_on = flags & (TH_SYN | TH_ACK);
-  printf("Flag SYN: %04x", syn_on);
-  printf("Flag SYN: %04x", ack_on);
+  printf("Flag SYN IS: %04x\t", syn_on);
+  printf("Flag ACK IS: %04x\n", ack_on);
 
   char *tmp_client_addr = malloc(sizeof(char) * 16);
    memcpy(tmp_client_addr, inet_ntoa(client_ip), sizeof(char)* 16);
@@ -117,12 +120,14 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   if(ack_on) {
       printf("STATE: ACK ON\n");
       struct tcp_struct *ret = NULL;
-      int port;
+      int sport, dport;
       struct in_addr receiver;
       if (is_server) {
+        printf("Packet received from server\n");
         ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
         if (ret != NULL) {
-          port = ret->tcp.th_sport;
+          sport = ntohs(ret->tcp.th_dport);
+          dport = ntohs(ret->tcp.th_sport);
           receiver = ret->ip.ip_src;
         }
         else {
@@ -131,9 +136,12 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
         }
       }
       else {
+        printf("Packet received from client\n");
         ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
         if (ret != NULL) {
-          port = ret->bouncing_port;
+          sport = ret->bouncing_port;
+          //this needs to be fixed to argument lip
+          dport = ntohs(ret->tcp.th_dport);
           receiver = server_ip;
         }
         else {
@@ -141,8 +149,8 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
           return;
         }
       }
-      send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, port);
-      printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_src),
+      send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
+      printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
           inet_ntoa(ret->ip.ip_src));
   }
   else {
@@ -150,7 +158,8 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     if(syn_on) {
       printf("STATE: ACK OFF, SYN ON\n");
       add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
-      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len, BOUNCING_PORT);
+      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
+          BOUNCING_PORT, ntohs(tcp->th_dport));
       BOUNCING_PORT++;
     }
     else {

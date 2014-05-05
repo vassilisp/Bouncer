@@ -52,7 +52,8 @@ struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp, i
     bool condition = false;
     //unsigned long rcv_ip = ip.ip_src.s_addr;
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
-    if(ptr->bouncing_port == port) {
+    printf("by port: Equal? %d  %d\n", ntohs(ptr->bouncing_port), port);
+    if(ntohs(ptr->bouncing_port) == port) {
       found = true;
       break;
     }
@@ -71,7 +72,6 @@ struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp, i
   else {
     return NULL;
   }
-  return NULL;
 }
 
 struct tcp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr tcp,
@@ -85,6 +85,7 @@ struct tcp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr 
     bool condition = false;
     //unsigned long rcv_ip = ip.ip_src.s_addr;
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
+    printf("by ip: Equal? %s  %s\n", inet_ntoa(ptr->ip.ip_src), inet_ntoa(ip_src));
     if(inet_ntoa(ptr->ip.ip_src) == inet_ntoa(ip_src)) {
       found = true;
       break;
