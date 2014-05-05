@@ -68,7 +68,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
     process_ping(packet, rcv_ip, header->len);
     return;
   }else if(rcv_ip->ip_p == 6){
-    process_tcp(packet, rcv_ip);
+    process_tcp(packet, rcv_ip, header->len);
     printf("\t| *** Protocol: TCP\n");
   }
 
