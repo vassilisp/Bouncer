@@ -2,6 +2,7 @@
 #define PING_H
 
 #include "globals.h"
+#include "tcp_list.h"
 /* TCP header */
 struct tcp_pseudo /*the tcp pseudo header*/
 {

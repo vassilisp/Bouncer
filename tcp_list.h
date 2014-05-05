@@ -14,6 +14,8 @@ struct tcp_struct* create_list(const struct ip ip, const struct tcphdr tcp, int 
 struct tcp_struct* add_to_list(const struct ip ip, const struct tcphdr tcp, int port);
 struct tcp_struct* search_in_list(const struct ip ip, const struct tcphdr tcp, int port,
     struct tcp_struct **prev);
+struct tcp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr tcp,
+    struct in_addr ip_src, struct tcp_struct **prev);
 void delete_from_list(const struct ip ip, const struct tcphdr tcp, int port);
 void print_list(void);
 

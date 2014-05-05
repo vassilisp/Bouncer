@@ -31,10 +31,8 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
   memcpy(buffer + sizeof(struct tcp_pseudo), &tcp, sizeof(struct tcphdr));
   memcpy(buffer + sizeof(struct tcp_pseudo) + sizeof(struct tcphdr), rest_data, rest_data_len);
 
-
   tcp.th_sum = checksum(buffer, size);
 
-  printf("Hello world\n\n\n");
   size_t final_size = sizeof(struct ip) + sizeof(struct tcphdr) + rest_data_len;
   char *final_buffer = malloc(final_size);
   memcpy(final_buffer, &send_ip, sizeof(struct ip));
@@ -81,11 +79,11 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
 }
 
 void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
-
+  bool is_server = false;
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
 
-  printf("Received ping packet from %s\n", inet_ntoa(rcv_ip->ip_src));
+  printf("Received TCP packet from %s\n", inet_ntoa(rcv_ip->ip_src));
   client_ip = rcv_ip->ip_src;
 
   // The tcp header
@@ -107,27 +105,59 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   printf("Flag SYN: %04x", syn_on);
   printf("Flag SYN: %04x", ack_on);
 
+  char *tmp_client_addr = malloc(sizeof(char) * 16);
+   memcpy(tmp_client_addr, inet_ntoa(client_ip), sizeof(char)* 16);
+  char *tmp_server_addr = malloc(sizeof(char) * 16);
+   memcpy(tmp_server_addr, inet_ntoa(server_ip), sizeof(char)* 16);
+
+  if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
+    is_server = true;
+  }
+
   if(ack_on) {
       printf("STATE: ACK ON\n");
-
+      struct tcp_struct *ret = NULL;
+      int port;
+      struct in_addr receiver;
+      if (is_server) {
+        ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
+        if (ret != NULL) {
+          port = ret->tcp.th_sport;
+          receiver = ret->ip.ip_src;
+        }
+        else {
+          printf("Not found in list\n");
+          return;
+        }
+      }
+      else {
+        ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
+        if (ret != NULL) {
+          port = ret->bouncing_port;
+          receiver = server_ip;
+        }
+        else {
+          printf("Not found in list\n");
+          return;
+        }
+      }
+      send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, port);
+      printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_src),
+          inet_ntoa(ret->ip.ip_src));
   }
   else {
     printf("STATE: ACK OFF\n");
     if(syn_on) {
       printf("STATE: ACK OFF, SYN ON\n");
-      if (STARTING_PORT > 50000) {
-       // exit(0);
-      }
-      add_to_list(rcv_ip, tcp, STARTING_PORT);
-      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len, STARTING_PORT);
-      STARTING_PORT++;
-
-
+      add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
+      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len, BOUNCING_PORT);
+      BOUNCING_PORT++;
     }
     else {
       printf("STATE: ACK OFF, SYN OFF\n");
+      printf("packet dropped \n");
+      return;
     }
-
   }
 
 

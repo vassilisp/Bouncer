@@ -36,7 +36,7 @@ char *arg_lport;
 char *arg_sip;
 char *arg_sport;
 
-int STARTING_PORT;
+int BOUNCING_PORT;
 
 #define SIZE_ETHERNET 14
 
