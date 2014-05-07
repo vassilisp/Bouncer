@@ -148,7 +148,8 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
         if (ret != NULL) {
           sport = ret->bouncing_port;
           //this needs to be fixed to argument lip
-          dport = ntohs(ret->tcp.th_dport);
+          //dport = ntohs(ret->tcp.th_dport);
+          dport = atoi(arg_sport);
           receiver = server_ip;
         }
         else {
@@ -166,7 +167,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       printf("STATE: ACK OFF, SYN ON\n");
       add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
       send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
-          BOUNCING_PORT, ntohs(tcp->th_dport));
+          BOUNCING_PORT, atoi(arg_sport));
       BOUNCING_PORT++;
     }
     else {
