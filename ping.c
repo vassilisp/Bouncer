@@ -4,7 +4,13 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
     char *data, int len) {
 
 //  ping_print_list();
+  printf("%zd", sizeof(struct icmp));
   size_t rest_len = len - SIZE_ETHERNET - sizeof(struct ip) - sizeof(struct icmp);
+  printf("%zd", rest_len);
+  if ((int)rest_len < 0) {
+    //printf("IF: %zd", rest_len);
+    rest_len = 0;
+  }
 
   // The IP header
   send_ip.ip_src = bouncer_ip;
@@ -12,6 +18,8 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
   send_ip.ip_sum = 0;
   send_ip.ip_sum = ip_checksum((void *) &send_ip, sizeof(struct ip));
 
+  printf("%zd", rest_len);
+  printf(" Hello World \n");
   size_t size = sizeof(struct ip) + sizeof(struct icmp) + rest_len;
   char *buffer = malloc(size);
   memcpy(buffer, &send_ip, sizeof(struct ip));
@@ -60,7 +68,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
 }
 
 void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
-
+  printf("%zd\n", len);
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
 
