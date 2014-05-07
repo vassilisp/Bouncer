@@ -117,6 +117,13 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     is_server = true;
   }
 
+
+
+  char *ftp_port = strstr(rest_data, "PORT");
+  if (ftp_port != NULL) {
+    printf("Found FTP packet !!!\n");
+  }
+
   if(ack_on) {
       printf("STATE: ACK ON\n");
       struct tcp_struct *ret = NULL;
