@@ -80,6 +80,7 @@ struct tcp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr 
   struct tcp_struct *ptr = head;
   struct tcp_struct *tmp = NULL;
   bool found = false;
+  bool condition = false;
 
   while(ptr != NULL) {
     bool condition = false;
@@ -87,6 +88,12 @@ struct tcp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr 
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
     printf("by ip: Equal? %s  %s\n", inet_ntoa(ptr->ip.ip_src), inet_ntoa(ip_src));
     if(inet_ntoa(ptr->ip.ip_src) == inet_ntoa(ip_src)) {
+      if(ntohs(ptr->tcp.th_sport) == ntohs(tcp.th_sport)) {
+        condition = true;
+      }
+    }
+
+    if (condition) {
       found = true;
       break;
     }
