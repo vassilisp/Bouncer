@@ -3,6 +3,8 @@
 
 #include "globals.h"
 #include "tcp_list.h"
+#include "ftp_list.h"
+
 /* TCP header */
 struct tcp_pseudo /*the tcp pseudo header*/
 {

@@ -1,5 +1,6 @@
 #include "tcp.h"
 
+
 void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
     char *rest_data, int rest_data_len, int sport, int dport) {
 
@@ -83,6 +84,7 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
 
 void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   bool is_server = false;
+  bool ftp_on = false;
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
 
@@ -121,6 +123,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
 
   char *ftp_port = strstr(rest_data, "PORT");
   if (ftp_port != NULL) {
+    ftp_on = true;
     printf("Found FTP packet !!!\n");
   }
 
