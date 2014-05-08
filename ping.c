@@ -79,6 +79,12 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
   struct icmp *rcv_icmp;
   rcv_icmp = (struct icmp*)(packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4);
 
+  int icmp_type = rcv_icmp->icmp_type;
+  if (!(icmp_type == 8 || icmp_type == 0 )) {
+    printf("Wrong ICMP type %d \n", icmp_type);
+    return;
+  }
+
   //len ??
   char *rest_data = malloc(sizeof(len));
 

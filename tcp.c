@@ -128,8 +128,15 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
     is_server = true;
   }
-
-
+  else {
+    int test_dport;
+    test_dport = ntohs(tcp->th_dport);
+    int test_dport2 = atoi(arg_lport);
+    if (test_dport != test_dport2){
+      printf("Packet with WRONG destination port -- Discarding XXXX");
+      return;
+    }
+  }
 
   char *ftp_port = strstr(rest_data, "PORT");
   if (ftp_port != NULL) {
@@ -157,15 +164,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       }
       else {
         printf("Packet received from client\n");
-/*
-        int test_dport;
-        dport = ntohs(tcp->th_dport);
-        int test_dport2 = atoi(arg_lport);
-        if (test_dport != test_dport2){
-          printf("Packet with WRONG destination port -- Discarding XXXX");
-          return;
-        }
-  */
+
         ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
         if (ret != NULL) {
           sport = ret->bouncing_port;
