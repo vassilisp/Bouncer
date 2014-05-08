@@ -24,7 +24,7 @@ struct ftp_struct* ftp_add_to_list(const struct ip ip, const struct tcphdr tcp,
     int bouncing_port, int ftp_data_port) {
 
   if(ftp_head == NULL) {
-    return (create_list(ip, tcp, bouncing_port, ftp_data_port));
+    return (ftp_create_list(ip, tcp, bouncing_port, ftp_data_port));
   }
 
   struct ftp_struct *ptr = (struct ftp_struct*) malloc(sizeof(struct ftp_struct));
@@ -124,7 +124,7 @@ void ftp_delete_from_list(const struct ip ip, const struct tcphdr tcp,
   struct ftp_struct *prev = NULL;
   struct ftp_struct *del = NULL;
 
-  del = search_in_list(ip, tcp, bouncing_port, ftp_data_port, &prev);
+  del = ftp_search_in_list(ip, tcp, bouncing_port, ftp_data_port, &prev);
   if(del == NULL) {
     perror("Failed to delete from list element");
     //exit(EXIT_FAILURE);

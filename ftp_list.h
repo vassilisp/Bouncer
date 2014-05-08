@@ -8,7 +8,7 @@ struct ftp_struct {
   struct tcphdr tcp;
   int bouncing_port;
   int ftp_data_port;
-  struct tcp_struct *next;
+  struct ftp_struct *next;
 };
 
 struct ftp_struct* ftp_create_list(const struct ip ip, const struct tcphdr tcp,
