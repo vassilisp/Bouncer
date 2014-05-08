@@ -98,11 +98,6 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   char *rest_data = malloc(sizeof(rest_data_len));
   rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct tcphdr);
 
-  if (ntohs(tcp->th_dport) != *arg_lip){
-    printf("Packet with WRONG destination port -- Discarding XXXX");
-    return;
-  }
-
   if (tcp->th_off*4 < 20){
     printf("Bad tcp minimum length -- Discarding XXXX)");
     return;
@@ -159,6 +154,15 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       }
       else {
         printf("Packet received from client\n");
+/*
+        int test_dport;
+        dport = ntohs(tcp->th_dport);
+        int test_dport2 = atoi(arg_lport);
+        if (test_dport != test_dport2){
+          printf("Packet with WRONG destination port -- Discarding XXXX");
+          return;
+        }
+  */
         ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
         if (ret != NULL) {
           sport = ret->bouncing_port;
