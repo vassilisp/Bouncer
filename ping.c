@@ -85,6 +85,11 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
     return;
   }
 
+  if(rcv_icmp->icmp_hun.ih_idseq.icd_id < 0 || rcv_icmp->icmp_hun.ih_idseq.icd_id > 65535){
+    printf("Bad ICMP ID\n");
+    return;
+  }
+  
   //len ??
   char *rest_data = malloc(sizeof(len));
 
