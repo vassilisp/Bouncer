@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   //initialize global const
   const int on = 1;
 
-  BOUNCING_PORT = 9020;
+  BOUNCING_PORT = 9080;
 
   arg_dev = argv[1];
   arg_lip = argv[2];

@@ -141,7 +141,26 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   char *ftp_port = strstr(rest_data, "PORT");
   if (ftp_port != NULL) {
     ftp_on = true;
-    printf("Found FTP packet !!!\n");
+    printf("FTP:::: Found FTP packet !!!\n");
+
+    struct ftp_struct *ftp_ret;
+    ftp_ret = ftp_search_in_list_by_ip(*rcv_ip, *tcp, 0, 0, client_ip, NULL);
+    if (ftp_ret == NULL) {
+      printf("FTP::::: Searching in list failed \n");
+      //if is null, change IP in payload
+      //add to list
+      //send
+      char *last_char =  strstr(ftp_port, "\r\n");
+      char *ftp_data = malloc(sizeof(char)*(last_char - ftp_port));
+      memcpy(ftp_data, ftp_port, last_char - ftp_port);
+
+      printf("\n\n\n%s \n\n\n", ftp_data);
+
+      struct ftp_ip_port tmp = extract_ip_port(ftp_data);
+    }
+    else {
+      printf("FTP:::::: Search in list succeded !!!\n");
+    }
   }
 
   if(ack_on) {
@@ -197,28 +216,44 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       return;
     }
   }
-
-
-/*
-  char *tmp_client_addr = malloc(sizeof(char) * 16);
-   memcpy(tmp_client_addr, inet_ntoa(client_ip), sizeof(char)* 16);
-  char *tmp_server_addr = malloc(sizeof(char) * 16);
-   memcpy(tmp_server_addr, inet_ntoa(server_ip), sizeof(char)* 16);
-
-  if(strcmp(tmp_client_addr, tmp_server_addr) == 0) {
-    struct ping_struct *ret = NULL;
-    ret = search_in_list(*rcv_ip, *rcv_icmp, NULL);
-    if (ret == NULL) {
-      perror("could not find client");
-      exit(EXIT_FAILURE);
-    }
-    memcpy(return_ping, ret, sizeof(struct ping_struct));
-    delete_from_list(*rcv_ip, *rcv_icmp);
-    send_ping(return_ping->ip.ip_src, return_ping->ip, return_ping->icmp);
-  }
-  else {
-    add_to_list(*rcv_ip, *rcv_icmp);
-    send_ping(server_ip, *rcv_ip, *rcv_icmp);
-  }
-  */
 }
+
+struct ftp_ip_port extract_ip_port(char *data, int len) {
+  struct ftp_ip_port ret;
+
+  data += 5;
+  char *comma = strstr(data, ",");
+  char *ip_1 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_1, data, (comma - data));
+
+
+  data = comma + 1;
+  comma = strstr(data, ",");
+  char *ip_2 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_2, data, (comma - data));
+
+  data = comma + 1;
+  comma = strstr(data, ",");
+  char *ip_3 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_3, data, (comma - data));
+
+  data = comma + 1;
+  comma = strstr(data, ",");
+  char *ip_4 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_4, data, (comma - data));
+
+  data = comma + 1;
+  comma = strstr(data, ",");
+  char *ip_5 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_5, data, (comma - data));
+
+  data = comma + 1;
+  comma = strstr(data, "\r\n");
+  char *ip_6 = malloc(sizeof(char)*(comma - data));
+  strncpy(ip_6, data, (comma - data));
+
+  printf("%s %s %s %s %s %s\n\n\n\n", ip_1, ip_2, ip_3, ip_4, ip_5, ip_6);
+
+  return ret;
+}
+

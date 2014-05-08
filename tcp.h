@@ -14,4 +14,10 @@ struct tcp_pseudo /*the tcp pseudo header*/
   unsigned char proto;
   unsigned short int length;
 };
+
+struct ftp_ip_port {
+  struct in_addr src_ip;
+  short port1;
+  short port2;
+}
 #endif

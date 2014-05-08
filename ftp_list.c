@@ -77,9 +77,9 @@ struct ftp_struct* ftp_search_in_list(const struct ip ip, const struct tcphdr tc
     return NULL;
   }
 }
-/*
-struct ftp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr tcp,
-    struct in_addr ip_src, struct ftp_struct **prev)
+
+struct ftp_struct* ftp_search_in_list_by_ip(const struct ip ip, const struct tcphdr tcp,
+int bouncing_port, int ftp_data_port, struct in_addr ip_src, struct ftp_struct **prev)
 {
   struct ftp_struct *ptr = ftp_head;
   struct ftp_struct *tmp = NULL;
@@ -117,7 +117,7 @@ struct ftp_struct* search_in_list_by_ip(const struct ip ip, const struct tcphdr 
     return NULL;
   }
 }
-*/
+
 
 void ftp_delete_from_list(const struct ip ip, const struct tcphdr tcp,
     int bouncing_port, int ftp_data_port) {
