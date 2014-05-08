@@ -11,6 +11,8 @@ CFLAGS = -W -Wall -Wextra
 .PHONY: all
 all: $(BOUNCER)
 	@echo "Compiled successfully"
+debug:
+	gcc -g $(files) -o bouncer -lpcap
 
 $(BOUNCER): $(objects)
 	$(CC) $(CFLAGS) $(objects) $(LIBS) -o $@

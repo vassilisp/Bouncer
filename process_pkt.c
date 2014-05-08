@@ -1,6 +1,6 @@
 #include <time.h>
 #include "globals.h"
-
+#include "utils.h"
 
 void convert_time(const struct timeval *tv1){
 
@@ -37,7 +37,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   //const struct sniff_ethernet *ethernet; /* The ethernet header */ - Not used here
   printf("-------------> %d\n", header->len);
 
-  const struct ip *rcv_ip; /* The IP header */
+  struct ip *rcv_ip; /* The IP header */
   const struct tcphdr *rcv_tcp; /* The TCP header */
 
   const char *payload; /* Packet payload */
@@ -51,7 +51,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   printf("\nRECEIVED PACKET FROM %s \n", inet_ntoa(rcv_ip->ip_src));
   size_ip = (rcv_ip->ip_hl)*4;
   if(rcv_ip->ip_v == 4){
-    if (size_ip < 20) {
+    if ((size_ip < 20) || (size_ip > 60)) {
       printf("\t| *** Invalid IP header length: %u bytes\n", rcv_ip->ip_hl);
       return;
     }
@@ -62,7 +62,23 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
     return;
   }
 
-  //TODO replace wit switch for each protocol handler
+  u_short test_checksum;
+  test_checksum = rcv_ip->ip_sum;
+  rcv_ip->ip_sum = 0;
+  rcv_ip->ip_sum = ip_checksum(rcv_ip, size_ip);
+  if(test_checksum != rcv_ip->ip_sum){
+    printf("Bad IP checksum -- Discarding XXXX");
+    return;
+  }
+
+  if (rcv_ip->ip_ttl == 0){
+    printf("Bad TTL = 0 -- Discarding XXXX");
+  }
+  if (ntohs(rcv_ip->ip_off == IP_RF)){
+    printf("EVIL BIT SET -- Discarding XXXX");
+    return;
+  }
+
   if ((rcv_ip->ip_p) == 1){
     printf("\t| *** Protocol: ICMP\n");
     process_ping(packet, rcv_ip, header->len);

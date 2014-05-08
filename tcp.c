@@ -98,6 +98,21 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   char *rest_data = malloc(sizeof(rest_data_len));
   rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct tcphdr);
 
+  if (ntohs(tcp->th_dport) != *arg_lip){
+    printf("Packet with WRONG destination port -- Discarding XXXX");
+    return;
+  }
+
+  if (tcp->th_off*4 < 20){
+    printf("Bad tcp minimum length -- Discarding XXXX)");
+    return;
+  }
+
+  u_short checksum;
+  checksum = tcp->th_sum;
+  tcp->th_sum = 0;
+  // TODO test checksum
+
   printf("\t TCP Options: %d %d %d %d\n", ntohs(tcp->th_sport), ntohs(tcp->th_dport),
     tcp->th_seq, tcp->th_ack);
 
