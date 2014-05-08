@@ -85,11 +85,29 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
     return;
   }
 
+  int icmp_code = rcv_icmp->icmp_code;
+  if (icmp_code != 0 ) {
+    printf("Wrong ICMP code %d \n", icmp_code);
+    return;
+  }
+
+  //printf("====================> %d", rcv_icmp->icmp_hun.ih_idseq.icd_id);
   if(rcv_icmp->icmp_hun.ih_idseq.icd_id < 0 || rcv_icmp->icmp_hun.ih_idseq.icd_id > 65535){
     printf("Bad ICMP ID\n");
     return;
   }
-  
+
+  u_short old_checksum = rcv_icmp->icmp_cksum;
+  rcv_icmp->icmp_cksum=0;
+  u_short new_checksum = checksum((unsigned short *) rcv_icmp, sizeof (struct icmp)*8);
+  rcv_icmp->icmp_cksum = new_checksum;
+
+  if (old_checksum != new_checksum) {
+    printf("Different ICMP checksum, packet will be dropped!%d\t%d\n",
+        old_checksum, new_checksum);
+    return;
+  }
+
   //len ??
   char *rest_data = malloc(sizeof(len));
 

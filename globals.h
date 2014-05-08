@@ -30,6 +30,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "utils.h"
+
 
 char *arg_dev;
 char *arg_lip;

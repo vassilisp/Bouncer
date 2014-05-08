@@ -74,7 +74,8 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
   if (rcv_ip->ip_ttl == 0){
     printf("Bad TTL = 0 -- Discarding XXXX");
   }
-  if (ntohs(rcv_ip->ip_off == IP_RF)){
+
+  if (ntohs(rcv_ip->ip_off) == IP_RF){
     printf("EVIL BIT SET -- Discarding XXXX");
     return;
   }
