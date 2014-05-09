@@ -15,9 +15,11 @@ struct tcp_pseudo /*the tcp pseudo header*/
   unsigned short int length;
 };
 
-struct ftp_ip_port {
-  struct in_addr src_ip;
-  short port1;
-  short port2;
-}
+struct ftp_man_port {
+  u_short port;
+  char *new_msg;
+  int msglen;
+};
+
+struct ftp_man_port extract_ip_port(char *data, struct in_addr ip);
 #endif
