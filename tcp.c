@@ -182,7 +182,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
 
 
       //add to list
-      ftp_add_to_list(*rcv_ip, *tcp, 0, ftp_tmp.port);
+      ftp_add_to_list(*rcv_ip, *tcp, 0, (ftp_tmp.port));
 
     }
     else {
@@ -192,15 +192,32 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   if (!syn_on){ //
     ack_on = 1;
   }
+  char ftp_from_server = false;
+  struct tcp_struct *ret = NULL;
+  int sport, dport;
+  struct in_addr receiver;
   
-  if (syn_on && !ack_on && is_server){
-    ack_on = 1;
+  if (is_server){
+    //TODO Search in FTP list by port
+    struct ftp_struct *ftp_result;
+    ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, ntohs(tcp->th_dport), NULL);
+    //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
+    //                     source IP = arg_lip
+    //                     port will remain unchanged...
+    if (ftp_result != NULL){
+      receiver = ftp_result->ip.ip_src;
+      sport = 20;
+      dport = (ftp_result->ftp_data_port);
+      ftp_from_server = true;
+    }else{
+      printf("packet from server - Not found in FTP  ports");
+    }
+
   }
+  if (ftp_from_server == false){
   if(ack_on) {
       printf("STATE: ACK ON\n");
-      struct tcp_struct *ret = NULL;
-      int sport, dport;
-      struct in_addr receiver;
+
       if (is_server) {
         printf("Packet received from server\n");
         ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
@@ -211,26 +228,14 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
         }
         else {
           printf("Not found in TCP list\n");
-          //TODO Search in FTP list by port
-          struct ftp_struct *ftp_result;
-          ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, ntohs(tcp->th_dport), NULL);
-          //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
-          //                     source IP = arg_lip
-          //                     port will remain unchanged...
-          if (ftp_result != NULL){
-            receiver = ftp_result->ip.ip_src;
-            sport = 20;
-            dport = ntohs(ftp_result->ftp_data_port);
-          }else{
-            printf("Not found in FTP either");
-            return;
-          }
+          return;
         }
       }
       else {
         printf("Packet received from client\n");
         //TODO if destination port = 20 --> forward it to server
-        if(tcp->th_dport == 20){  //ntohs needed
+        u_int port = ntohs(tcp->th_dport);
+        if(( port == 20)){
           struct in_addr tmp_in_addr;
           tmp_in_addr.s_addr = atoi(arg_lip);
           receiver = tmp_in_addr;
@@ -272,6 +277,11 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       return;
     }
   }
+}else{
+  send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
+  printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
+  inet_ntoa(receiver));
+}
 }
 
 
