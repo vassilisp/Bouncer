@@ -219,100 +219,100 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     }
   }
 
+  /*
   if (!syn_on){ //
     ack_on = 1;
   }
-  char ftp_from_server = false;
+  */
+  char ftp_data_packet = false;
   struct tcp_struct *ret = NULL;
   int sport, dport;
   struct in_addr receiver;
 
-  if (is_server){
-    //TODO Search in FTP list by port
-    struct ftp_struct *ftp_result;
-    ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, ntohs(tcp->th_dport), NULL);
-    //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
-    //                     source IP = arg_lip
-    //                     port will remain unchanged...
-    if (ftp_result != NULL){
-      receiver = ftp_result->ip.ip_src;
-      sport = 20;
-      dport = (ftp_result->ftp_data_port);
-      ftp_from_server = true;
-    }else{
-      printf("packet from server - Not found in FTP  ports");
+  if (ntohs(tcp->th_dport) == 20 || ntohs(tcp->th_sport) == 20) {
+    ftp_data_packet = true;
+
+    if (is_server){
+      //TODO Search in FTP list by port
+      struct ftp_struct *ftp_result;
+      ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, tcp->th_dport, NULL);
+      //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
+      //                     source IP = arg_lip
+      //                     port will remain unchanged...
+      if (ftp_result != NULL){
+        receiver = ftp_result->ip.ip_src;
+        sport = 20;
+        dport = (ftp_result->ftp_data_port);
+      }else{
+        printf("packet from server - Not found in FTP  ports");
+      }
     }
-
+    else { // is from client
+      struct in_addr tmp_in_addr;
+      tmp_in_addr.s_addr = atoi(arg_sip);
+      receiver = tmp_in_addr;
+      sport = tcp->th_sport;
+      dport = tcp->th_dport;
+    }
+    send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
+    printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
+    inet_ntoa(receiver));
   }
-  if (ftp_from_server == false){
 
-  if(ack_on) {
-      printf("STATE: ACK ON\n");
 
-      if (is_server) {
-        printf("Packet received from server\n");
-        ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
-        if (ret != NULL) {
-          sport = ntohs(ret->tcp.th_dport);
-          dport = ntohs(ret->tcp.th_sport);
-          receiver = ret->ip.ip_src;
+  if (ftp_data_packet == false){
+
+    if(ack_on) {
+        printf("STATE: ACK ON\n");
+
+        if (is_server) {
+          printf("Packet received from server\n");
+          ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
+          if (ret != NULL) {
+            sport = ntohs(ret->tcp.th_dport);
+            dport = ntohs(ret->tcp.th_sport);
+            receiver = ret->ip.ip_src;
+          }
+          else {
+            printf("Not found in TCP list\n");
+            return;
+          }
         }
         else {
-          printf("Not found in TCP list\n");
-          return;
+          printf("Packet received from client\n");
+          ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
+          if (ret != NULL) {
+            sport = ret->bouncing_port;
+            //this needs to be fixed to argument lip
+            //dport = ntohs(ret->tcp.th_dport);
+            dport = atoi(arg_sport);
+            receiver = server_ip;
+          }
+          else {
+            printf("Not found in list\n");
+            return;
+          }
         }
-      }
-      else {
-        printf("Packet received from client\n");
-        //TODO if destination port = 20 --> forward it to server
-        u_int port = ntohs(tcp->th_dport);
-        if(( port == 20)){
-          struct in_addr tmp_in_addr;
-          tmp_in_addr.s_addr = atoi(arg_lip);
-          receiver = tmp_in_addr;
-          sport = tcp->th_sport;
-          dport = tcp->th_dport;
-        }
-        // destination IP = arg_sip
-        // source port and destination port remain the same
-
-        ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
-        if (ret != NULL) {
-          sport = ret->bouncing_port;
-          //this needs to be fixed to argument lip
-          //dport = ntohs(ret->tcp.th_dport);
-          dport = atoi(arg_sport);
-          receiver = server_ip;
-        }
-        else {
-          printf("Not found in list\n");
-          return;
-        }
-      }
-      send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
-      printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
-          inet_ntoa(receiver));
-  }
-  else {
-    printf("STATE: ACK OFF\n");
-    if(syn_on) {
-      printf("STATE: ACK OFF, SYN ON\n");
-      add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
-      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
-          BOUNCING_PORT, atoi(arg_sport));
-      BOUNCING_PORT +=3;
+        send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
+        printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
+            inet_ntoa(receiver));
     }
     else {
-      printf("STATE: ACK OFF, SYN OFF\n");
-      printf("packet dropped \n");
-      return;
+      printf("STATE: ACK OFF\n");
+      if(syn_on) {
+        printf("STATE: ACK OFF, SYN ON\n");
+        add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
+        send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
+            BOUNCING_PORT, atoi(arg_sport));
+        BOUNCING_PORT +=3;
+      }
+      else {
+        printf("STATE: ACK OFF, SYN OFF\n");
+        printf("packet dropped \n");
+        return;
+      }
     }
   }
-}else{
-  send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
-  printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
-  inet_ntoa(receiver));
-}
 }
 
 
