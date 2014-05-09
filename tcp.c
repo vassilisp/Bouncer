@@ -173,13 +173,38 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   printf("/t/t ---XXXX---- >> %s",payload_data);
   char *ftp_port = strstr(payload_data, "PORT");
   char *ftp200 = strstr(payload_data, "200 P");
+  char *ftp500 = strstr(payload_data, "500");
 
-  if (ftp_port != NULL && ftp200 == NULL) {
+  if (ftp_port != NULL && ftp200 == NULL && ftp500 == NULL) {
     ftp_on = true;
     printf("--------------------FTP:::: Found FTP initial PORT packet !!!\n");
 
+
+    printf("\n\n\n%s \n\n\n", payload_data);
+
+    struct ftp_man_port ftp_tmp;
+    ftp_tmp = extract_ip_port(payload_data, bouncer_ip);
+
+    if (strlen(ftp_tmp.new_msg) >= strlen(payload_data)){
+        int additional_data;
+        additional_data = (strlen(ftp_tmp.new_msg) - strlen(payload_data));
+        rest_data_len +=additional_data;
+    }else{
+      int additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
+      int ii;
+      for (ii; ii=additional_data; ii++){
+        strcat(rest_data, " ");
+      }
+      additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
+    }
+     memcpy(ftp_port, ftp_tmp.new_msg, strlen(ftp_tmp.new_msg));
+
+
+
+
+
     struct ftp_struct *ftp_ret;
-    ftp_ret = ftp_search_in_list_by_ip(*rcv_ip, *tcp, 0, 0, client_ip, NULL);
+    ftp_ret = ftp_search_in_list_by_ip(*rcv_ip, *tcp, 0, ftp_tmp.port, client_ip, NULL);
     if (ftp_ret == NULL) {
       printf("FTP::::: Searching in list failed \n");
 
@@ -190,33 +215,10 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       memcpy(ftp_data, ftp_port, last_char - ftp_port);
       */
 
-      printf("\n\n\n%s \n\n\n", payload_data);
-
-      struct ftp_man_port ftp_tmp;
-      ftp_tmp = extract_ip_port(payload_data, bouncer_ip);
-
-      if (strlen(ftp_tmp.new_msg) >= strlen(payload_data)){
-          int additional_data;
-          additional_data = (strlen(ftp_tmp.new_msg) - strlen(payload_data));
-          rest_data_len +=additional_data;
-      }else{
-        int additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
-        int ii;
-        for (ii; ii=additional_data; ii++){
-          strcat(rest_data, " ");
-        }
-        additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
-      }
-       memcpy(ftp_port, ftp_tmp.new_msg, strlen(ftp_tmp.new_msg));
-
-
       //add to list
       printf("Adding to list port: %d\n", ftp_tmp.port);
       ftp_add_to_list(*rcv_ip, *tcp, 0, ftp_tmp.port);
 
-    }
-    else {
-      printf("FTP:::::: Search in list succeded -NOT THE FIRST packet!!!\n");
     }
   }
 
@@ -244,8 +246,11 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
         receiver = ftp_result->ip.ip_src;
         sport = 20;
         dport = ftp_result->ftp_data_port;
+        printf("Found in list ip: %s, sport: %d, dport %d\n", inet_ntoa(receiver),
+            sport, dport);
       }else{
         printf("packet from server - Not found in FTP  ports");
+        return;
       }
     }
     else { // is from client

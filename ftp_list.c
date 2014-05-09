@@ -93,7 +93,9 @@ int bouncing_port, int ftp_data_port, struct in_addr ip_src, struct ftp_struct *
     printf("by ip: Equal? %s  %s\n", inet_ntoa(ptr->ip.ip_src), inet_ntoa(ip_src));
     if(inet_ntoa(ptr->ip.ip_src) == inet_ntoa(ip_src)) {
       if(ntohs(ptr->tcp.th_sport) == ntohs(tcp.th_sport)) {
-        condition = true;
+        if(ptr->ftp_data_port == ftp_data_port) {
+          condition = true;
+        }
       }
     }
 
