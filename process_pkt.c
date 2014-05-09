@@ -73,6 +73,7 @@ void process_pkt(u_char *args, const struct pcap_pkthdr *header,
 
   if (rcv_ip->ip_ttl == 0){
     printf("Bad TTL = 0 -- Discarding XXXX");
+    return;
   }
 
   if (ntohs(rcv_ip->ip_off) == IP_RF){

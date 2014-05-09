@@ -14,7 +14,7 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
   //the TCP header
   tcp.th_sport = htons((u_short) sport);
   tcp.th_dport = htons((u_short) dport);
-  printf("port ----> %d\n", tcp.th_sport);
+  printf("port ----> %d\n", ntohs(tcp.th_sport));
   tcp.th_sum = 0;
 
   //pseudoheader
@@ -105,10 +105,39 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     return;
   }
 
-  u_short checksum;
-  checksum = tcp->th_sum;
-  tcp->th_sum = 0;
   // TODO test checksum
+  u_short test_checksum;
+  test_checksum = tcp->th_sum;
+  tcp->th_sum = 0;
+  
+  struct tcp_pseudo pseudo;
+
+  pseudo.src_addr = rcv_ip->ip_src.s_addr;
+  pseudo.dst_addr = rcv_ip->ip_dst.s_addr;
+  pseudo.zero = htons(0);
+  pseudo.proto = rcv_ip->ip_p;
+  //int pseudo_length = sizeof(tcp->th_off*4) + rest_data_len;
+  int gamwlen = len - (SIZE_ETHERNET + (rcv_ip->ip_hl*4));
+  int pseudo_length = gamwlen;
+  pseudo.length = htons(pseudo_length);
+
+  size_t buff_size = sizeof(struct tcp_pseudo) + pseudo_length;
+  char *cksum_buffer = malloc(buff_size);
+  memcpy(cksum_buffer, &pseudo, sizeof(struct tcp_pseudo));
+  
+  //memcpy(cksum_buffer + sizeof(struct tcp_pseudo), &tcp, sizeof(struct tcphdr));
+  //memcpy(cksum_buffer + sizeof(struct tcp_pseudo) + sizeof(struct tcphdr), rest_data, rest_data_len);
+  memcpy(cksum_buffer + sizeof(struct tcp_pseudo), packet+offset, gamwlen);
+  
+  u_short comp_checksum;
+  comp_checksum = checksum(cksum_buffer, buff_size);
+  if(test_checksum != comp_checksum){
+    printf("WRONG checksum ----- Discarding XXXX");
+    return;
+  }else{
+    tcp->th_sum = test_checksum;
+  }
+
 
   printf("\t TCP Options: %d %d %d %d\n", ntohs(tcp->th_sport), ntohs(tcp->th_dport),
     tcp->th_seq, tcp->th_ack);
@@ -143,7 +172,10 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     ftp_on = true;
     printf("Found FTP packet !!!\n");
   }
-
+  
+  if (!syn_on){
+  ack_on = 1; }
+  
   if(ack_on) {
       printf("STATE: ACK ON\n");
       struct tcp_struct *ret = NULL;
@@ -189,7 +221,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
       send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
           BOUNCING_PORT, atoi(arg_sport));
-      BOUNCING_PORT++;
+      BOUNCING_PORT +=3;
     }
     else {
       printf("STATE: ACK OFF, SYN OFF\n");
