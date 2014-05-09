@@ -56,8 +56,8 @@ struct ftp_struct* ftp_search_in_list(const struct ip ip, const struct tcphdr tc
     bool condition = false;
     //unsigned long rcv_ip = ip.ip_src.s_addr;
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
-    printf("by port: Equal? %d  %d\n", (ptr->ftp_data_port), ftp_data_port);
-    if((ntohs(ptr->ftp_data_port)) == ntohs(ftp_data_port)) {
+    printf("by port: Equal? %d  %d\n", ptr->ftp_data_port, ftp_data_port);
+    if((ptr->ftp_data_port) == ftp_data_port) {
       found = true;
       break;
     }

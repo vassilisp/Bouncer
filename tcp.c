@@ -14,7 +14,7 @@ void send_tcp(struct in_addr receiver, struct ip send_ip, struct tcphdr tcp,
   //the TCP header
   tcp.th_sport = htons((u_short) sport);
   tcp.th_dport = htons((u_short) dport);
-  printf("port ----> %d\n", ntohs(tcp.th_sport));
+  printf("Sending from SRC: %d TO: %d \n", ntohs(tcp.th_sport), ntohs(tcp.th_dport));
   tcp.th_sum = 0;
 
   //pseudoheader
@@ -165,7 +165,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     int test_dport;
     test_dport = ntohs(tcp->th_dport);
     int test_dport2 = atoi(arg_lport);
-    if (test_dport != test_dport2){
+    if ((test_dport != test_dport2) && (test_dport != 20)){
       printf("Packet with WRONG destination port -- Discarding XXXX");
       return;
     }
@@ -173,7 +173,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   printf("/t/t ---XXXX---- >> %s",payload_data);
   char *ftp_port = strstr(payload_data, "PORT");
   char *ftp200 = strstr(payload_data, "200 P");
-  
+
   if (ftp_port != NULL && ftp200 == NULL) {
     ftp_on = true;
     printf("--------------------FTP:::: Found FTP initial PORT packet !!!\n");
@@ -211,7 +211,8 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
 
 
       //add to list
-      ftp_add_to_list(*rcv_ip, *tcp, 0, (ftp_tmp.port));
+      printf("Adding to list port: %d\n", ftp_tmp.port);
+      ftp_add_to_list(*rcv_ip, *tcp, 0, ftp_tmp.port);
 
     }
     else {
@@ -235,24 +236,25 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
     if (is_server){
       //TODO Search in FTP list by port
       struct ftp_struct *ftp_result;
-      ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, tcp->th_dport, NULL);
+      ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, ntohs(tcp->th_dport), NULL);
       //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
       //                     source IP = arg_lip
       //                     port will remain unchanged...
       if (ftp_result != NULL){
         receiver = ftp_result->ip.ip_src;
         sport = 20;
-        dport = (ftp_result->ftp_data_port);
+        dport = ftp_result->ftp_data_port;
       }else{
         printf("packet from server - Not found in FTP  ports");
       }
     }
     else { // is from client
       struct in_addr tmp_in_addr;
-      tmp_in_addr.s_addr = atoi(arg_sip);
-      receiver = tmp_in_addr;
-      sport = tcp->th_sport;
-      dport = tcp->th_dport;
+     // tmp_in_addr.s_addr = atoi(arg_sip);
+      receiver = server_ip;
+      sport = ntohs(tcp->th_sport);
+      dport = ntohs(tcp->th_dport);
+      printf("SENDING PAKET TO SERVER %d %d\n", sport, dport);
     }
     send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
     printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
