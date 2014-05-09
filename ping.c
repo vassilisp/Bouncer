@@ -97,6 +97,7 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
     return;
   }
 
+
   u_short old_checksum = rcv_icmp->icmp_cksum;
   rcv_icmp->icmp_cksum=0;
   u_short new_checksum = checksum((unsigned short *) rcv_icmp, sizeof (struct icmp)*8);
@@ -138,6 +139,10 @@ void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
     send_ping(return_ping->ip.ip_src, return_ping->ip, *rcv_icmp, rest_data, len);
   }
   else {
+    if(rcv_icmp->icmp_type == 0 ) {
+      printf("Wrong icmp type");
+      return;
+    }
     ping_add_to_list(*rcv_ip, *rcv_icmp);
     send_ping(server_ip, *rcv_ip, *rcv_icmp, rest_data, len);
   }
