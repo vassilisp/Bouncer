@@ -394,8 +394,8 @@ struct ftp_man_port extract_ip_port(char *data, struct in_addr ip) {
   sprintf(ip_5_buf, "%x", atoi(ip_5));
   sprintf(ip_6_buf, "%x", atoi(ip_6));
 
-  printf("ip_5_buf len: %d with value %s\n", strlen(ip_5_buf), ip_5_buf);
-  printf("ip_6_buf len: %d with value %s\n", strlen(ip_6_buf), ip_6_buf);
+  printf("ip_5_buf len: %zd with value %s\n", strlen(ip_5_buf), ip_5_buf);
+  printf("ip_6_buf len: %zd with value %s\n", strlen(ip_6_buf), ip_6_buf);
 
   char *ip_5_buf_tmp =  malloc(sizeof(char)*2);
   char *ip_6_buf_tmp =  malloc(sizeof(char)*2);

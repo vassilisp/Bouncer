@@ -68,7 +68,7 @@ void send_ping(struct in_addr receiver, struct ip send_ip, struct icmp icmp,
 }
 
 void process_ping(u_char *packet, struct ip *rcv_ip, int len) {
-  printf("%zd\n", len);
+  printf("%d\n", len);
   bouncer_ip.s_addr = (uint32_t) inet_addr(arg_lip);
   server_ip.s_addr = (uint32_t) inet_addr(arg_sip);
 
