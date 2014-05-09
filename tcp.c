@@ -100,6 +100,10 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   char *rest_data = malloc(sizeof(rest_data_len));
   rest_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + sizeof(struct tcphdr);
 
+  size_t payload_len = len - SIZE_ETHERNET - (rcv_ip->ip_hl)*4 - (tcp->th_off)*4;
+  char *payload_data = malloc(sizeof(payload_len));
+  payload_data = packet + SIZE_ETHERNET + (rcv_ip->ip_hl)*4 + (tcp->th_off)*4;
+  
   if (tcp->th_off*4 < 20){
     printf("Bad tcp minimum length -- Discarding XXXX)");
     return;
@@ -137,32 +141,61 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       return;
     }
   }
-
-  char *ftp_port = strstr(rest_data, "PORT");
-  if (ftp_port != NULL) {
+  printf("/t/t ---XXXX---- >> %s",payload_data);
+  char *ftp_port = strstr(payload_data, "PORT");
+  char *ftp200 = strstr(payload_data, "200 P");
+  
+  if (ftp_port != NULL && ftp200 == NULL) {
     ftp_on = true;
-    printf("FTP:::: Found FTP packet !!!\n");
+    printf("--------------------FTP:::: Found FTP initial PORT packet !!!\n");
 
     struct ftp_struct *ftp_ret;
     ftp_ret = ftp_search_in_list_by_ip(*rcv_ip, *tcp, 0, 0, client_ip, NULL);
     if (ftp_ret == NULL) {
       printf("FTP::::: Searching in list failed \n");
-      //if is null, change IP in payload
-      //add to list
-      //send
+
+      //if is null, change IP in PORT command
+      /* The same data as in payload -- but without the \r\n
       char *last_char =  strstr(ftp_port, "\r\n");
       char *ftp_data = malloc(sizeof(char)*(last_char - ftp_port));
       memcpy(ftp_data, ftp_port, last_char - ftp_port);
+      */
 
-      printf("\n\n\n%s \n\n\n", ftp_data);
+      printf("\n\n\n%s \n\n\n", payload_data);
 
-      struct ftp_ip_port tmp = extract_ip_port(ftp_data);
+      struct ftp_man_port ftp_tmp;
+      ftp_tmp = extract_ip_port(payload_data, bouncer_ip);
+
+      if (strlen(ftp_tmp.new_msg) >= strlen(payload_data)){
+          int additional_data;
+          additional_data = (strlen(ftp_tmp.new_msg) - strlen(payload_data));
+          rest_data_len +=additional_data;
+      }else{
+        int additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
+        int ii;
+        for (ii; ii=additional_data; ii++){
+          strcat(rest_data, " ");
+        }
+        additional_data = (strlen(ftp_tmp.new_msg) >= strlen(payload_data));
+      }
+       memcpy(ftp_port, ftp_tmp.new_msg, strlen(ftp_tmp.new_msg));
+
+
+      //add to list
+      ftp_add_to_list(*rcv_ip, *tcp, 0, ftp_tmp.port);
+
     }
     else {
-      printf("FTP:::::: Search in list succeded !!!\n");
+      printf("FTP:::::: Search in list succeded -NOT THE FIRST packet!!!\n");
     }
   }
-
+  if (!syn_on){ //
+    ack_on = 1;
+  }
+  
+  if (syn_on && !ack_on && is_server){
+    ack_on = 1;
+  }
   if(ack_on) {
       printf("STATE: ACK ON\n");
       struct tcp_struct *ret = NULL;
@@ -177,12 +210,35 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
           receiver = ret->ip.ip_src;
         }
         else {
-          printf("Not found in list\n");
-          return;
+          printf("Not found in TCP list\n");
+          //TODO Search in FTP list by port
+          struct ftp_struct *ftp_result;
+          ftp_result = ftp_search_in_list(*rcv_ip,*tcp,0, ntohs(tcp->th_dport), NULL);
+          //if we have a result, get the destination IP = source IP of the IP packet that is saved on the list
+          //                     source IP = arg_lip
+          //                     port will remain unchanged...
+          if (ftp_result != NULL){
+            receiver = ftp_result->ip.ip_src;
+            sport = 20;
+            dport = ntohs(ftp_result->ftp_data_port);
+          }else{
+            printf("Not found in FTP either");
+            return;
+          }
         }
       }
       else {
         printf("Packet received from client\n");
+        //TODO if destination port = 20 --> forward it to server
+        if(tcp->th_dport == 20){  //ntohs needed
+          struct in_addr tmp_in_addr;
+          tmp_in_addr.s_addr = atoi(arg_lip);
+          receiver = tmp_in_addr;
+          sport = tcp->th_sport;
+          dport = tcp->th_dport;
+        }
+        // destination IP = arg_sip
+        // source port and destination port remain the same
 
         ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
         if (ret != NULL) {
@@ -199,7 +255,7 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
       }
       send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
       printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
-          inet_ntoa(ret->ip.ip_src));
+          inet_ntoa(receiver));
   }
   else {
     printf("STATE: ACK OFF\n");
@@ -218,8 +274,29 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
   }
 }
 
-struct ftp_ip_port extract_ip_port(char *data, int len) {
-  struct ftp_ip_port ret;
+
+
+struct ftp_man_port extract_ip_port(char *data, struct in_addr ip) {
+
+  char *bouncer_ip_str = inet_ntoa(ip);
+  size_t s_size = strlen(bouncer_ip_str);
+
+  printf("%s --- %zd\n", bouncer_ip_str, s_size);
+
+  char *gsub;
+  gsub = strstr(bouncer_ip_str, ".");
+  memcpy(gsub,",", 1);
+
+  gsub += 1;
+  gsub = strstr(bouncer_ip_str, ".");
+  memcpy(gsub,",", 1);
+
+  gsub += 1;
+  gsub = strstr(bouncer_ip_str, ".");
+  memcpy(gsub,",", 1);
+
+
+  printf("%s --- %zd\n", bouncer_ip_str, s_size);
 
   data += 5;
   char *comma = strstr(data, ",");
@@ -253,7 +330,40 @@ struct ftp_ip_port extract_ip_port(char *data, int len) {
   strncpy(ip_6, data, (comma - data));
 
   printf("%s %s %s %s %s %s\n\n\n\n", ip_1, ip_2, ip_3, ip_4, ip_5, ip_6);
+  int buff_size = (5 + s_size + strlen(ip_5) + strlen(ip_6) + 2 +4);
+  char *buffer = malloc(buff_size);
 
+
+  memcpy(buffer, "PORT ", 5);
+  memcpy(buffer + 5, bouncer_ip_str , s_size);
+  memcpy(buffer + 5 + s_size, "," , 1);
+  memcpy(buffer + 5 + 1 + s_size, ip_5 , strlen(ip_5));
+  memcpy(buffer + 5 + 1 + s_size + strlen(ip_5), "," , 1);
+  memcpy(buffer + 5 + 1 + s_size + strlen(ip_5) + 1, ip_6 , strlen(ip_6));
+  memcpy(buffer + 5 + 1 + s_size + strlen(ip_5) + 1 + strlen(ip_6), " \r\n" , 4);
+
+  printf("%s\n", buffer);
+  char *ip_5_buf = malloc(sizeof(char)*2);
+  char *ip_6_buf =  malloc(sizeof(char)*2);
+  char *ip_final_buf =  malloc(sizeof(char)*4);
+
+//  int len_ip_5 = uintToHexStr(atoi(ip_5), ip_5_buf);
+ // int len_ip_6 = uintToHexStr(atoi(ip_6), ip_6_buf);
+  
+  sprintf(ip_5_buf, "%x", atoi(ip_5));
+  sprintf(ip_6_buf, "%x", atoi(ip_6));
+  strncat(ip_final_buf, ip_5_buf, 2);
+  strncat(ip_final_buf, ip_6_buf, 2);
+
+  printf("%s\n", ip_final_buf);
+  
+  u_int x;
+  sscanf(ip_final_buf, "%x", &x);
+
+  struct ftp_man_port ret;
+  ret.port = x;
+  
+  ret.new_msg = buffer;
+  ret.msglen = sizeof(*buffer)*4;
   return ret;
 }
-

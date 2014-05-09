@@ -51,13 +51,13 @@ struct ftp_struct* ftp_search_in_list(const struct ip ip, const struct tcphdr tc
   struct ftp_struct *ptr = ftp_head;
   struct ftp_struct *tmp = NULL;
   bool found = false;
-/*
+
   while(ptr != NULL) {
     bool condition = false;
     //unsigned long rcv_ip = ip.ip_src.s_addr;
     //unsigned long src_ip = ptr->ip.ip_src.s_addr;
-    printf("by port: Equal? %d  %d\n", ntohs(ptr->bouncing_port), port);
-    if(ntohs(ptr->bouncing_port) == port) {
+    printf("by port: Equal? %d  %d\n", (ptr->ftp_data_port), ftp_data_port);
+    if((ptr->ftp_data_port) == ftp_data_port) {
       found = true;
       break;
     }
@@ -66,7 +66,7 @@ struct ftp_struct* ftp_search_in_list(const struct ip ip, const struct tcphdr tc
       ptr = ptr->next;
     }
   }
-*/
+
   if(found == true) {
     if(prev) {
       *prev = tmp;
