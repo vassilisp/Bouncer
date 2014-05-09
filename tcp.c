@@ -393,11 +393,27 @@ struct ftp_man_port extract_ip_port(char *data, struct in_addr ip) {
   
   sprintf(ip_5_buf, "%x", atoi(ip_5));
   sprintf(ip_6_buf, "%x", atoi(ip_6));
+
+  printf("ip_5_buf len: %d with value %s\n", strlen(ip_5_buf), ip_5_buf);
+  printf("ip_6_buf len: %d with value %s\n", strlen(ip_6_buf), ip_6_buf);
+
+  char *ip_5_buf_tmp =  malloc(sizeof(char)*2);
+  char *ip_6_buf_tmp =  malloc(sizeof(char)*2);
+
+  if(strlen(ip_6_buf) == 1) {
+    strncpy(ip_6_buf_tmp, "0", 1);
+    strncat(ip_6_buf_tmp, ip_6_buf, 1);
+    strncpy(ip_6_buf, ip_6_buf_tmp, 2);
+  }
+
+  printf("corrected ip_6_buf %s\n", ip_6_buf);
+
   strncat(ip_final_buf, ip_5_buf, 2);
   strncat(ip_final_buf, ip_6_buf, 2);
 
+
   printf("%s\n", ip_final_buf);
-  
+
   u_int x;
   sscanf(ip_final_buf, "%x", &x);
 

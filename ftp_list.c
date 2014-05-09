@@ -35,6 +35,7 @@ struct ftp_struct* ftp_add_to_list(const struct ip ip, const struct tcphdr tcp,
   ptr->ip = ip;
   ptr->tcp = tcp;
   ptr->bouncing_port = bouncing_port;
+  printf("8=======D~~~~~              SAVING TO LIST FTP_DATA_PORT ----> %d\n", ftp_data_port);
   ptr->ftp_data_port = ftp_data_port;
   ptr->next = NULL;
 
