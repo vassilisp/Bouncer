@@ -262,55 +262,48 @@ void process_tcp(u_char *packet, struct ip *rcv_ip, int len) {
 
   if (ftp_data_packet == false){
 
-    if(ack_on) {
-        printf("STATE: ACK ON\n");
-
-        if (is_server) {
-          printf("Packet received from server\n");
-          ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
-          if (ret != NULL) {
-            sport = ntohs(ret->tcp.th_dport);
-            dport = ntohs(ret->tcp.th_sport);
-            receiver = ret->ip.ip_src;
-          }
-          else {
-            printf("Not found in TCP list\n");
-            return;
-          }
-        }
-        else {
-          printf("Packet received from client\n");
-          ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
-          if (ret != NULL) {
-            sport = ret->bouncing_port;
-            //this needs to be fixed to argument lip
-            //dport = ntohs(ret->tcp.th_dport);
-            dport = atoi(arg_sport);
-            receiver = server_ip;
-          }
-          else {
-            printf("Not found in list\n");
-            return;
-          }
-        }
-        send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
-        printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
-            inet_ntoa(receiver));
+    if(syn_on && !ack_on) {
+      printf("INITIAL SYN PACKET \n");
+      printf("STATE: ACK OFF, SYN ON\n");
+      add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
+      send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
+          BOUNCING_PORT, atoi(arg_sport));
+      BOUNCING_PORT +=3;
     }
     else {
-      printf("STATE: ACK OFF\n");
-      if(syn_on) {
-        printf("STATE: ACK OFF, SYN ON\n");
-        add_to_list(*rcv_ip, *tcp, BOUNCING_PORT);
-        send_tcp(server_ip, *rcv_ip, *tcp, rest_data, rest_data_len,
-            BOUNCING_PORT, atoi(arg_sport));
-        BOUNCING_PORT +=3;
+      printf("STATE: SYN OFF\n");
+
+      if (is_server) {
+        printf("Packet received from server\n");
+        ret = search_in_list(*rcv_ip, *tcp, tcp->th_dport, NULL);
+        if (ret != NULL) {
+          sport = ntohs(ret->tcp.th_dport);
+          dport = ntohs(ret->tcp.th_sport);
+          receiver = ret->ip.ip_src;
+        }
+        else {
+          printf("Not found in TCP list\n");
+          return;
+        }
       }
       else {
-        printf("STATE: ACK OFF, SYN OFF\n");
-        printf("packet dropped \n");
-        return;
+        printf("Packet received from client\n");
+        ret = search_in_list_by_ip(*rcv_ip, *tcp, client_ip, NULL);
+        if (ret != NULL) {
+          sport = ret->bouncing_port;
+          //this needs to be fixed to argument lip
+          //dport = ntohs(ret->tcp.th_dport);
+          dport = atoi(arg_sport);
+          receiver = server_ip;
+        }
+        else {
+          printf("Not found in list\n");
+          return;
+        }
       }
+      send_tcp(receiver, *rcv_ip, *tcp, rest_data, rest_data_len, sport, dport);
+      printf("Packet from %s to %s!!\n", inet_ntoa(rcv_ip->ip_dst),
+          inet_ntoa(receiver));
     }
   }
 }
@@ -381,7 +374,7 @@ struct ftp_man_port extract_ip_port(char *data, struct in_addr ip) {
   memcpy(buffer + 5 + 1 + s_size, ip_5 , strlen(ip_5));
   memcpy(buffer + 5 + 1 + s_size + strlen(ip_5), "," , 1);
   memcpy(buffer + 5 + 1 + s_size + strlen(ip_5) + 1, ip_6 , strlen(ip_6));
-  memcpy(buffer + 5 + 1 + s_size + strlen(ip_5) + 1 + strlen(ip_6), " \r\n" , 4);
+  memcpy(buffer + 5 + 1 + s_size + strlen(ip_5) + 1 + strlen(ip_6), "\r\n" , 4);
 
   printf("%s\n", buffer);
   char *ip_5_buf = malloc(sizeof(char)*2);
